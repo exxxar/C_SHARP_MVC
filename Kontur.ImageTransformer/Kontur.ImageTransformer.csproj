@@ -45,12 +45,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Allocator.cs" />
+    <Compile Include="PNGFormat\Chunk.cs" />
     <Compile Include="EntryPoint.cs" />
     <Compile Include="ErrorAttribute.cs" />
     <Compile Include="ErrorController.cs" />
+    <Compile Include="HttpHelper.cs" />
+    <Compile Include="iImageTransformer.cs" />
+    <Compile Include="ImageTransformer.cs" />
     <Compile Include="PageAttribute.cs" />
     <Compile Include="PageController.cs" />
     <Compile Include="PageException.cs" />
+    <Compile Include="PNGFormat\IHDRChunk.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="AsyncHttpServer.cs" />
   </ItemGroup>

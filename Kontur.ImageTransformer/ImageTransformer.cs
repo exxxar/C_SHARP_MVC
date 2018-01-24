@@ -13,6 +13,10 @@ namespace Kontur.ImageTransformer
         public ImageTransformer(Stream inputStream)
         {
             this.inputStream = inputStream;
-        }
+         
+                
+         }
+
+
     }
 }

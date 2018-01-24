@@ -8,5 +8,6 @@ namespace Kontur.ImageTransformer
 {
     interface iImageTransformer
     {
+        
     }
 }
