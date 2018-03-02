@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Reflection;
@@ -17,7 +18,8 @@ namespace Kontur.ImageTransformer
         }
 
         public void Start(string prefix)
-        {
+        {            
+
             lock (listener)
             {
                 if (!isRunning)
@@ -31,8 +33,8 @@ namespace Kontur.ImageTransformer
                         IsBackground = true,
                         Priority = ThreadPriority.Highest
                     };
+                   
                     listenerThread.Start();
-
                     isRunning = true;
                 }
             }
@@ -66,7 +68,7 @@ namespace Kontur.ImageTransformer
             listener.Close();
         }
 
-        private void Listen()
+        private async void Listen()
         {
             while (true)
             {
@@ -76,6 +78,7 @@ namespace Kontur.ImageTransformer
                     {
                         var context = listener.GetContext();
                         Task.Run(() => HandleContextAsync(context));
+                        
                     }
                     else Thread.Sleep(0);
                 }
@@ -93,11 +96,9 @@ namespace Kontur.ImageTransformer
         private async Task HandleContextAsync(HttpListenerContext listenerContext)
         {
             // TODO: implement request handling
-
+            
             Console.WriteLine(listenerContext.Request.RawUrl);
-
-
-            String buf = "";
+            
             Type t = typeof(PageController);
             MethodInfo[] attrs = t.GetMethods();
         
@@ -139,15 +140,16 @@ namespace Kontur.ImageTransformer
                             errorCode = -1;
                         }catch(TargetInvocationException e)
                         {
-                           errorCode = ((PageException)e.InnerException).code;                           
+                           errorCode = ((PageException)e.InnerException).code;                                                   
                            break;
                         }
                     }
+                   
                 }
 
              
             }
-
+           
             if (errorCode!=-1)
             {
                 Type t2 = typeof(ErrorController);
@@ -160,8 +162,8 @@ namespace Kontur.ImageTransformer
                         int localErrorCode = 0;
                         ErrorAttribute tx = (ErrorAttribute)Attribute.GetCustomAttribute(m, typeof(ErrorAttribute));
                         if (tx != null)
-                            localErrorCode = tx.errorCode;                                
-
+                            localErrorCode = tx.errorCode;
+                      
                         if (cd.AttributeType == typeof(ErrorAttribute)
                             && errorCode == localErrorCode)                          
                         {                            

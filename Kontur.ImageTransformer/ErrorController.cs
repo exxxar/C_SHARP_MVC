@@ -10,22 +10,25 @@ namespace Kontur.ImageTransformer
     public class ErrorController
     {
         [Error(400)]
-        public String badRequest(HttpListenerRequest request)
+        public void badRequest(HttpListenerRequest request, HttpHelper helper)
         {
-            return "404";
+            helper.SetStatus(HttpStatusCode.BadRequest);
+            helper.SendText("400");
         }
 
         [Error(404)]
-        public String pageNotFound(HttpListenerRequest request)
+        public void pageNotFound(HttpListenerRequest request, HttpHelper helper)
         {
-            return "404";
+            helper.SetStatus(HttpStatusCode.NotFound);
+            helper.SendText("404");
         }
 
 
         [Error(500)]
-        public String networkError(HttpListenerRequest request)
+        public void networkError(HttpListenerRequest request, HttpHelper helper)
         {
-            return "500";
+            helper.SetStatus(HttpStatusCode.InternalServerError);
+            helper.SendText("500");
         }
     }
 }

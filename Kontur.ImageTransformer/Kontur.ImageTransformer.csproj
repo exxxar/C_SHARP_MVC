@@ -57,6 +57,7 @@
     <Compile Include="PageController.cs" />
     <Compile Include="PageException.cs" />
     <Compile Include="PNGFormat\IHDRChunk.cs" />
+    <Compile Include="PngReader.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="AsyncHttpServer.cs" />
   </ItemGroup>

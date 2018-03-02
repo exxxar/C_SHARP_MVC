@@ -1,7 +1,12 @@
 ﻿using Kontur.ImageTransformer.PNGFormat;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Management;
+using Microsoft.Win32;
+using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 namespace Kontur.ImageTransformer
 {
@@ -10,12 +15,12 @@ namespace Kontur.ImageTransformer
         [Page(@"/process/grayscale/([0-9]+),([0-9]+),([0-9]+),([0-9]+)", PageAttribute.HttpMethod.POST)]
         public String grayscale(HttpListenerRequest request)
         {
-            Console.WriteLine("test"+request.HttpMethod);
-            return "2 "+ request.RawUrl;
+            Console.WriteLine("test" + request.HttpMethod);
+            return "2 " + request.RawUrl;
         }
 
         [Page(@"/process/sepia/([0-9]+),([0-9]+),([0-9]+),([0-9]+)", PageAttribute.HttpMethod.POST)]
-        public void sepia(HttpListenerRequest request,HttpHelper helper)
+        public void sepia(HttpListenerRequest request, HttpHelper helper)
         {
             byte[] imageBytes = new byte[Math.Min(request.InputStream.Length, 100000)];
 
@@ -32,13 +37,13 @@ namespace Kontur.ImageTransformer
         [Page(@"/process/threshold.([0-9]+)./([0-9]+),([0-9]+),([0-9]+),([0-9]+)", PageAttribute.HttpMethod.GET)]
         public String threshold(HttpListenerRequest request, HttpHelper helper, object n, object x, object y, object h, object w)
         {
-          
+
             Console.WriteLine(n + " " + x + " " + y + " " + h + " " + w);
             return "1 " + request.QueryString;
         }
 
         [Page("/process/main")]
-        public void main(HttpListenerRequest request, HttpHelper helper) 
+        public void main(HttpListenerRequest request, HttpHelper helper)
         {
 
             Console.WriteLine(request.InputStream.Length);
@@ -47,90 +52,84 @@ namespace Kontur.ImageTransformer
 
             using (MemoryStream ms = new MemoryStream(imageBytes))
             {
-                
+
             }
 
             //throw new PageException("ERROR!!", 500);
             helper.SetStatus(HttpStatusCode.OK);
             helper.SendText("test");
-           
+
 
         }
 
-        [Page("/process/main3",PageAttribute.HttpMethod.POST)]
+        [Page("/process/main3", PageAttribute.HttpMethod.POST)]
         public void main3(HttpListenerRequest request, HttpHelper helper)
         {
-            using (BinaryReader reader = new BinaryReader(request.InputStream))
+
+
+            //PerformanceCounter cpuCounter;
+            //PerformanceCounter ramCounter;
+
+            //cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
+            //ramCounter = new PerformanceCounter("Memory", "Available KBytes");
+
+            //Console.WriteLine("cpu=>" + cpuCounter.NextValue() + "%");
+            //Console.WriteLine("ramCounter=>" + ramCounter.NextValue() + "KB");
+            List<Chunk> list = new List<Chunk>();
+
+            BinaryReader reader = new BinaryReader(request.InputStream);
+            lock (reader)
             {
-
-                // Read file 
-              
-                
-                Console.WriteLine(request.ContentLength64+"["+request.ContentType+"]") ;
-                Byte[] bytes =  reader.ReadBytes((int)request.ContentLength64);
-
-              
+                Byte[] bytes = reader.ReadBytes((int)request.ContentLength64);
                 var pattern = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
                 int offset = bytes.Locate(pattern)[0];
 
-                Chunk chunk = new Chunk();
-                chunk.length = (Int32)((UInt32)BitConverter.ToInt32(bytes, offset + 8)).ReverseBytes();
-                Console.WriteLine(chunk.length);
-                
-                byte[] buf = new byte[chunk.length+8];
-                Array.Copy(bytes, offset+8, buf, 0, 4 + chunk.length + 4);
-                chunk.setByteArray(buf);
-                Console.WriteLine(chunk.type);
-                IHDRChunk ihdr = new IHDRChunk(chunk);
+                for (int step = 8; step < bytes.Length - offset;)
+                {
+                    int size = (Int32)((UInt32)BitConverter.ToInt32(bytes, offset + step)).ReverseBytes() + 12;
+                    Console.WriteLine("size=>" + size);
+                    byte[] buf = new byte[size];
+                    Array.Copy(bytes, offset + step, buf, 0, size);
+                    Chunk chunk = new Chunk(buf);
+                    step += size;
+                    if (chunk.type.Equals("IDAT"))
+                    {
 
-                Console.WriteLine(ihdr.bitDepth);
-                Console.WriteLine(ihdr.color);
-                //4+LEN+4
+                    }
+                    list.Add(chunk);
+                    if (chunk.type.Equals("IHDR"))
+                    {
+                        IHDRChunk ihdr = new IHDRChunk(chunk);
+                    }
+                   
+                    if (chunk.type.Equals("IEND"))
+                        break;
 
-                //Int32  length= (Int32)((UInt32)BitConverter.ToInt32(bytes, offset+8)).ReverseBytes();
-                //string title = bytes.toString(offset + 12, 4);
-                //if (title.Equals("IHDR"))
-                //{
-                //    Int32 width = (Int32)((UInt32)BitConverter.ToInt32(bytes, offset + 16)).ReverseBytes(),
-                //        height = (Int32)((UInt32)BitConverter.ToInt32(bytes, offset + 20)).ReverseBytes();
-                //    byte 
-                //        bitDepth = bytes[offset + 24],
-                //        color = bytes[offset + 25],
-                //        methodCompression = bytes[offset + 26],
-                //        methodfiltration = bytes[offset + 27],
-                //        methodInterlace = bytes[offset + 28];
-                //    Console.WriteLine("width=>" + width);
-                //    Console.WriteLine("height=>" + height);
-                //    Console.WriteLine("bitDepth=>" + bitDepth);
-                //    Console.WriteLine("color=>" + color);
-                //    Console.WriteLine("methodCompression=>" + methodCompression);
-                //    Console.WriteLine("methodfiltration=>" + methodfiltration);
-                //    Console.WriteLine("methodInterlace=>" + methodInterlace);
-
-
-                //}
-                //Console.WriteLine(length);
-                //Console.WriteLine((BitConverter.IsLittleEndian?"true":"false")+" "+title);
-
-
-                Console.WriteLine("pos=>"+ offset);               
-                BinaryWriter bw = new BinaryWriter(helper.response.OutputStream);
-                bw.Write(bytes);
-             
-            
+                }
+                reader.Dispose();
+                reader.Close();               
             }
 
-            //byte[] imageBytes = new byte[Math.Min(request.InputStream.Length, 100000)];
+
+            BinaryWriter bw = new BinaryWriter(helper.response.OutputStream);
+            lock (bw)
+            {
+                bw.Write(new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A });
+                foreach (Chunk c in list)
+                {
+
+                    Console.WriteLine(c.type);
+                    bw.Write(c.getFragment());
+                }
+                bw.Flush();
+                bw.Close();
+            }
 
 
-            //using (MemoryStream ms = new MemoryStream(imageBytes))
-            //{
-            //    Console.WriteLine(imageBytes.Length);
-            //}
 
             //throw new PageException("ERROR!!", 500);
-           // helper.SetStatus(HttpStatusCode.OK);
-           // helper.SendText("test");
+            // helper.SetStatus(HttpStatusCode.OK);
+            // helper.SendText("test");
 
 
         }
@@ -139,7 +138,7 @@ namespace Kontur.ImageTransformer
         public String main2(HttpListenerRequest request)
         {
 
-           // throw new PageException("ERROR!!", 500);
+            // throw new PageException("ERROR!!", 500);
             return "main2";
         }
 

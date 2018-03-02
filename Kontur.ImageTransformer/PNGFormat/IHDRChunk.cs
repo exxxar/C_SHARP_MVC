@@ -20,6 +20,7 @@ namespace Kontur.ImageTransformer.PNGFormat
         public Chunk chunk { get; set; }
        
         public IHDRChunk(Chunk chunk)
+            :base(chunk.byteArray)
         {
             this.chunk = chunk;
             this.takeData();
@@ -27,15 +28,25 @@ namespace Kontur.ImageTransformer.PNGFormat
 
         private void takeData()
         {
-           
-            //this.height = (Int32)((UInt32)BitConverter.ToInt32(this.getByteArray(), 4)).ReverseBytes();
-            //this.width = (Int32)((UInt32)BitConverter.ToInt32(this.getByteArray(), 8)).ReverseBytes();
 
-            this.bitDepth = this.getByteArray()[12];
-            this.color = this.getByteArray()[13];
-            this.methodCompression = this.getByteArray()[14];
-            this.methodFiltration = this.getByteArray()[15];
-            this.methodInterlace = this.getByteArray()[16];          
+            this.height = (Int32)((UInt32)BitConverter.ToInt32(this.byteArray, 8)).ReverseBytes();
+            this.width = (Int32)((UInt32)BitConverter.ToInt32(this.byteArray, 12)).ReverseBytes();
+
+            this.bitDepth = this.byteArray[16];
+            this.color = this.byteArray[17];
+            this.methodCompression = this.byteArray[18];
+            this.methodFiltration = this.byteArray[19];
+            this.methodInterlace = this.byteArray[20];
+
+
+            Console.WriteLine("height=>" + height);
+            Console.WriteLine("width=>" + width);
+            Console.WriteLine("bit depth=>" + bitDepth);
+            Console.WriteLine("color=>" + color);
+            Console.WriteLine("methodCompression=>" + methodCompression);
+            Console.WriteLine("methodFiltration=>" + methodFiltration);
+            Console.WriteLine("methodInterlace=>" + methodInterlace);
+
         }
 
     }
