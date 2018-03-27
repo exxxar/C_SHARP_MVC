@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,6 +10,14 @@ namespace Kontur.ImageTransformer
     public static class Allocator
     {
         static readonly int[] Empty = new int[0];
+
+
+        public static Stream toStream(this byte[] data)
+        {
+            Stream s = new MemoryStream();
+            s.Write(data, 0, data.Length);
+            return s;
+        }
 
         public static UInt32 ReverseBytes(this UInt32 value)
         {

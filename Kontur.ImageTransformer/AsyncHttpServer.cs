@@ -120,6 +120,7 @@ namespace Kontur.ImageTransformer
                         mc = reg.Matches(listenerContext.Request.RawUrl);                        
                     }
 
+               
                     if (cd.AttributeType == typeof(PageAttribute)
                         && mc.Count!=0 
                         && method.ToString().Equals(listenerContext.Request.HttpMethod) )
@@ -148,6 +149,27 @@ namespace Kontur.ImageTransformer
                 }
 
              
+            }
+
+            var fileUrl = listenerContext.Request.RawUrl.Replace("/","\\");
+            if (File.Exists($"sites\\{fileUrl}"))
+            {
+                errorCode = -1;
+                listenerContext.Response.StatusCode = (int)HttpStatusCode.OK;
+
+                var f = File.OpenRead($"sites\\{fileUrl}");
+                Console.WriteLine($"sites\\{fileUrl}");
+                using (FileStream fstream = File.OpenRead($"sites\\{fileUrl}"))
+                {
+                    // преобразуем строку в байты
+                    byte[] array = new byte[fstream.Length];
+                    // считываем данные
+                    fstream.Read(array, 0, array.Length);
+
+                    using (var writer = listenerContext.Response.OutputStream)
+                        writer.Write(array, 0, array.Length);
+                }
+               
             }
            
             if (errorCode!=-1)

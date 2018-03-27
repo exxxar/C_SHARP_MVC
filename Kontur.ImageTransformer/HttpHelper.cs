@@ -26,11 +26,20 @@ namespace Kontur.ImageTransformer
                 writer.WriteLine(text);
         }
 
-        public void SendImage(Stream stream)
+        public void SendImage(byte[] imgByteArray)
         {
             response.StatusCode = (int)HttpStatusCode.OK;
-            using (var writer = new StreamWriter(response.OutputStream))
-                writer.Write(stream);
+            using (var writer = response.OutputStream)
+                writer.Write(imgByteArray, 0, imgByteArray.Length);
         }
+
+        public void view(String htmlName)
+        {
+            var html = File.ReadAllText($"sites\\{htmlName}.html");
+            StreamWriter sw = new StreamWriter(response.OutputStream);
+            sw.Write(html);
+            sw.Close();
+        }     
+        
     }
 }
