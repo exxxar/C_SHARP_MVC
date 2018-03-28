@@ -11,6 +11,7 @@ using NPOI.XWPF.UserModel;
 
 namespace Kontur.ImageTransformer
 {
+    [Controller]
     public class PageController
     {
         

@@ -18,7 +18,7 @@ namespace Kontur.ImageTransformer
         }
 
         public void Start(string prefix)
-        {            
+        {
 
             lock (listener)
             {
@@ -33,7 +33,7 @@ namespace Kontur.ImageTransformer
                         IsBackground = true,
                         Priority = ThreadPriority.Highest
                     };
-                   
+
                     listenerThread.Start();
                     isRunning = true;
                 }
@@ -78,7 +78,7 @@ namespace Kontur.ImageTransformer
                     {
                         var context = listener.GetContext();
                         Task.Run(() => HandleContextAsync(context));
-                        
+
                     }
                     else Thread.Sleep(0);
                 }
@@ -96,62 +96,70 @@ namespace Kontur.ImageTransformer
         private async Task HandleContextAsync(HttpListenerContext listenerContext)
         {
             // TODO: implement request handling
-            
+
             Console.WriteLine(listenerContext.Request.RawUrl);
-            
-            Type t = typeof(PageController);
-            MethodInfo[] attrs = t.GetMethods();
-        
+
             int errorCode = 404;
-        
-            foreach (MethodInfo m in attrs)
+
+            Type[] typelist = Assembly.GetExecutingAssembly().GetTypes();
+
+            foreach (Type type in typelist)
             {
-                foreach (CustomAttributeData cd in m.CustomAttributes)
+                if (type.GetCustomAttribute(typeof(ControllerAttribute)) != null)
                 {
-                
-                    PageAttribute.HttpMethod method = PageAttribute.HttpMethod.GET;
-                    PageAttribute tx = (PageAttribute)Attribute.GetCustomAttribute(m, typeof(PageAttribute));
-                    MatchCollection mc = null;
+                    MethodInfo[] attrs = type.GetMethods();
 
-                    if (tx != null)
-                    {                       
-                        method = tx.method;
-                        Regex reg = new Regex(tx.path);
-                        mc = reg.Matches(listenerContext.Request.RawUrl);                        
-                    }
-
-               
-                    if (cd.AttributeType == typeof(PageAttribute)
-                        && mc.Count!=0 
-                        && method.ToString().Equals(listenerContext.Request.HttpMethod) )
+                    foreach (MethodInfo m in attrs)
                     {
-                        try
+                        foreach (CustomAttributeData cd in m.CustomAttributes)
                         {
-                            List<object> obj = new List<object>();
-                            obj.Add(listenerContext.Request);
-                            obj.Add(new HttpHelper(listenerContext.Response));
-                            foreach (Match item in mc)
+
+                            PageAttribute.HttpMethod method = PageAttribute.HttpMethod.GET;
+                            PageAttribute tx = (PageAttribute)Attribute.GetCustomAttribute(m, typeof(PageAttribute));
+                            MatchCollection mc = null;
+
+                            if (tx != null)
                             {
-                                for (int i = 1; i < item.Groups.Count;i++) {                                  
-                                    obj.Add(item.Groups[i]);
-                                }                                  
+                                method = tx.method;
+                                Regex reg = new Regex(tx.path);
+                                mc = reg.Matches(listenerContext.Request.RawUrl);
                             }
 
-                            m.Invoke(Activator.CreateInstance(typeof(PageController)), obj.ToArray());
-                            errorCode = -1;
-                        }catch(TargetInvocationException e)
-                        {
-                           errorCode = ((PageException)e.InnerException).code;                                                   
-                           break;
-                        }
-                    }
-                   
-                }
 
-             
+                            if (cd.AttributeType == typeof(PageAttribute)
+                                && mc.Count != 0
+                                && method.ToString().Equals(listenerContext.Request.HttpMethod))
+                            {
+                                try
+                                {
+                                    List<object> obj = new List<object>();
+                                    obj.Add(listenerContext.Request);
+                                    obj.Add(new HttpHelper(listenerContext.Response));
+                                    foreach (Match item in mc)
+                                    {
+                                        for (int i = 1; i < item.Groups.Count; i++)
+                                        {
+                                            obj.Add(item.Groups[i]);
+                                        }
+                                    }
+
+                                    m.Invoke(Activator.CreateInstance(type), obj.ToArray());
+                                    errorCode = -1;
+                                }
+                                catch (TargetInvocationException e)
+                                {
+                                    errorCode = ((PageException)e.InnerException).code;
+                                    break;
+                                }
+                            }
+
+                        }
+
+                    }
+                }
             }
 
-            var fileUrl = listenerContext.Request.RawUrl.Replace("/","\\");
+            var fileUrl = listenerContext.Request.RawUrl.Replace("/", "\\");
             if (File.Exists($"sites\\{fileUrl}"))
             {
                 errorCode = -1;
@@ -169,10 +177,10 @@ namespace Kontur.ImageTransformer
                     using (var writer = listenerContext.Response.OutputStream)
                         writer.Write(array, 0, array.Length);
                 }
-               
+
             }
-           
-            if (errorCode!=-1)
+
+            if (errorCode != -1)
             {
                 Type t2 = typeof(ErrorController);
                 MethodInfo[] errors = t2.GetMethods();
@@ -185,19 +193,19 @@ namespace Kontur.ImageTransformer
                         ErrorAttribute tx = (ErrorAttribute)Attribute.GetCustomAttribute(m, typeof(ErrorAttribute));
                         if (tx != null)
                             localErrorCode = tx.errorCode;
-                      
+
                         if (cd.AttributeType == typeof(ErrorAttribute)
-                            && errorCode == localErrorCode)                          
-                        {                            
-                              m.Invoke(Activator.CreateInstance(typeof(ErrorController)), new object[] { listenerContext.Request, new HttpHelper(listenerContext.Response) });                            
+                            && errorCode == localErrorCode)
+                        {
+                            m.Invoke(Activator.CreateInstance(typeof(ErrorController)), new object[] { listenerContext.Request, new HttpHelper(listenerContext.Response) });
                         }
                     }
 
 
                 }
             }
-          
-            
+
+
         }
 
         private readonly HttpListener listener;
