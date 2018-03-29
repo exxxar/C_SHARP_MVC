@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Kontur.ImageTransformer
@@ -21,7 +22,7 @@ namespace Kontur.ImageTransformer
         }
         public void SendText(String text)
         {
-            
+
             using (var writer = new StreamWriter(response.OutputStream))
                 writer.WriteLine(text);
         }
@@ -39,7 +40,30 @@ namespace Kontur.ImageTransformer
             StreamWriter sw = new StreamWriter(response.OutputStream);
             sw.Write(html);
             sw.Close();
-        }     
-        
+        }
+
+        public void view(String htmlName, Dictionary<string, string> variables)
+        {
+            var html = File.ReadAllText($"sites\\{htmlName}.html");
+            MatchCollection mc = null;
+            Regex reg = new Regex("{{([0-9a-zA-Z]+)}}");
+            mc = reg.Matches(html);
+
+            foreach (Match match in mc)
+            {
+                try
+                {
+                    html = html.Replace(match.Groups[0].Value, variables[match.Groups[1].Value]);
+                }
+                catch
+                {
+                    html = html.Replace(match.Groups[0].Value, $"undefined[{match.Groups[1].Value}]");
+                }
+            }
+            StreamWriter sw = new StreamWriter(response.OutputStream);
+            sw.Write(html);
+            sw.Close();
+        }
+
     }
 }

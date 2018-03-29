@@ -11,10 +11,9 @@ namespace Kontur.ImageTransformer
     class TestController
     {
 
-        [Page(@"/testss")]
+        [Page(@"/barcode/tes")]
         public void main323(HttpListenerRequest request, HttpHelper helper)
         {
-
             helper.SetStatus(HttpStatusCode.OK);
             helper.SendText("test");
 

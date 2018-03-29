@@ -14,20 +14,20 @@ namespace Kontur.ImageTransformer
     [Controller]
     public class PageController
     {
-        
-        private BarcodeGenerator bGenerator = new BarcodeGenerator();
-              
 
-        [Page(@"/barcode/gen/ean13/([0-9]+)")]
-        public void main(HttpListenerRequest request, HttpHelper helper,object data)
+        private BarcodeGenerator bGenerator = new BarcodeGenerator();
+
+
+        [Page(@"/barcode/gen/ean13/([0-9]{12})")]
+        public void main(HttpListenerRequest request, HttpHelper helper, object data)
         {
-            
+
             helper.SetStatus(HttpStatusCode.OK);
             try
             {
                 helper.SendImage(bGenerator.getEan13("" + data));
             }
-            catch(ArgumentException ae)
+            catch (ArgumentException ae)
             {
                 throw new PageException(ae.Message, 500);
             }
@@ -39,7 +39,13 @@ namespace Kontur.ImageTransformer
         public void main3(HttpListenerRequest request, HttpHelper helper)
         {
             helper.SetStatus(HttpStatusCode.OK);
-            helper.view("index");
+
+            Dictionary<string, string> dict = new Dictionary<string, string>() {
+                {"variable", "test 1"},
+                {"test", "test 2"},
+                {"direction", "test 2"},
+            };
+            helper.view("index", dict);
         }
 
         [Page(@"/barcode/gen/ean12")]

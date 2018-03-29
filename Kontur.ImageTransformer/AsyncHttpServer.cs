@@ -95,7 +95,6 @@ namespace Kontur.ImageTransformer
 
         private async Task HandleContextAsync(HttpListenerContext listenerContext)
         {
-            // TODO: implement request handling
 
             Console.WriteLine(listenerContext.Request.RawUrl);
 
@@ -166,18 +165,14 @@ namespace Kontur.ImageTransformer
                 listenerContext.Response.StatusCode = (int)HttpStatusCode.OK;
 
                 var f = File.OpenRead($"sites\\{fileUrl}");
-                Console.WriteLine($"sites\\{fileUrl}");
                 using (FileStream fstream = File.OpenRead($"sites\\{fileUrl}"))
                 {
-                    // преобразуем строку в байты
                     byte[] array = new byte[fstream.Length];
-                    // считываем данные
                     fstream.Read(array, 0, array.Length);
-
                     using (var writer = listenerContext.Response.OutputStream)
                         writer.Write(array, 0, array.Length);
                 }
-
+                f.Close();
             }
 
             if (errorCode != -1)
@@ -201,11 +196,8 @@ namespace Kontur.ImageTransformer
                         }
                     }
 
-
                 }
             }
-
-
         }
 
         private readonly HttpListener listener;
